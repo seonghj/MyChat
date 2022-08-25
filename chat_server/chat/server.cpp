@@ -12,6 +12,7 @@ void SESSION::init()
 
     connected = false;
     key = INVALIDID;
+    room = INVALIDID;
 
     over.dataBuffer.len = BUFSIZE;
     over.dataBuffer.buf = over.messageBuffer;
@@ -77,7 +78,7 @@ void CSERVER::send_packet(int to, char* packet)
     }
 }
 
-void CSERVER::send_chat_to_all(int key, char* buf)
+void CSERVER::SendChat(int key, int room, char* buf)
 {
     SC_CHAT_PACKET p;
     p.size = sizeof(SC_CHAT_PACKET);
@@ -87,13 +88,15 @@ void CSERVER::send_chat_to_all(int key, char* buf)
 
     char* s_buf = reinterpret_cast<char*>(&p);
 
-    for (int i = 0; i < MAX_CLIENT; ++i) {
+    rooms[room].room_lock.lock();
+    for (int i : rooms[room].USERS) {
         if (!sessions[i].connected) continue;
         send_packet(i, s_buf);
     }
+    rooms[room].room_lock.unlock();
 }
 
-void CSERVER::send_loginOK_packet(int key)
+void CSERVER::SendLoginOK(int key)
 {
     SC_LOGINOK_PACKET p;
     p.size = sizeof(SC_LOGINOK_PACKET);
@@ -103,7 +106,7 @@ void CSERVER::send_loginOK_packet(int key)
     send_packet(key, reinterpret_cast<char*>(&p));
 }
 
-void CSERVER::send_userlogin_packet(int key)
+void CSERVER::SendUserLogin(int key)
 {
     SC_USERLOGIN_PACKET p;
     p.size = sizeof(SC_USERLOGIN_PACKET);
@@ -119,7 +122,7 @@ void CSERVER::send_userlogin_packet(int key)
     }
 }
 
-void CSERVER::send_loginFail_packet(int key)
+void CSERVER::SendLoginFail(int key)
 {
     SC_LOGINFAIL_PACKET p;
     p.size = sizeof(SC_LOGINFAIL_PACKET);
@@ -129,7 +132,7 @@ void CSERVER::send_loginFail_packet(int key)
     send_packet(key, reinterpret_cast<char*>(&p));
 }
 
-void CSERVER::send_chat_packet(int key, char* buf)
+void CSERVER::SendChat(int key, char* buf)
 {
     SC_CHAT_PACKET p;
     p.size = sizeof(SC_CHAT_PACKET);
@@ -140,32 +143,53 @@ void CSERVER::send_chat_packet(int key, char* buf)
     send_packet(key, reinterpret_cast<char*>(&p));
 }
 
+void CSERVER::SendJoinRoom(int key, int room)
+{
+    SC_JOINROOM_PACKET p;
+    p.size = sizeof(SC_JOINROOM_PACKET);
+    p.type = PACKETTYPE::SC_JOINROOM;
+    p.key = key;
+    p.room = room;
+
+    send_packet(key, reinterpret_cast<char*>(&p));
+}
+
 void CSERVER::process_packet(int key, char* buf)
 {
-    switch (buf[1]) {
+    Packet* p = reinterpret_cast<Packet*>(buf);
+    switch (p->type) {
     case CS_LOGIN: {
         CS_LOGIN_PACKET* p = reinterpret_cast<CS_LOGIN_PACKET*>(buf);
         m_pDB->Search_ID(p->id, p->pw);
         bool b = m_pDB->Login(p->id);
         if (b) {
-            send_loginOK_packet(key);
+            SendLoginOK(key);
             strcpy_s(sessions[key].id, sizeof(p->id), p->id);
             strcpy_s(sessions[key].pw, sizeof(p->pw), p->pw);
-            send_userlogin_packet(key);
+            SendUserLogin(key);
         }
         else {
-            send_loginFail_packet(key);
+            SendLoginFail(key);
         }
         break;
     }
     case CS_CHAT: {
         CS_CHAT_PACKET* p = reinterpret_cast<CS_CHAT_PACKET*>(buf);
-        send_chat_to_all(p->key, p->buf);
+        SendChat(p->key, sessions[p->key].room, p->buf);
         break;
     }
-    case CS_JOIN: {
-        CS_JOIN_PACKET* p = reinterpret_cast<CS_JOIN_PACKET*>(buf);
+    case CS_JOINACCOUNT: {
+        CS_JOINACCOUNT_PACKET* p = reinterpret_cast<CS_JOINACCOUNT_PACKET*>(buf);
         bool b = m_pDB->Insert_ID(p->id, p->pw);
+        break;
+    }
+    case CS_JOINROOM: {
+        CS_JOINROOM_PACKET* p = reinterpret_cast<CS_JOINROOM_PACKET*>(buf);
+        rooms[p->room].room_lock.lock();
+        rooms[p->room].USERS.push_back(p->key);
+        rooms[p->room].room_lock.unlock();
+        sessions[p->key].room = p->room;
+        SendJoinRoom(p->key, p->room);
         break;
     }
     case CS_DISCONNECT: {
@@ -181,6 +205,14 @@ void CSERVER::process_packet(int key, char* buf)
 void CSERVER::Disconnect(int key)
 {
     closesocket(sessions[key].sock);
+    if (sessions[key].room != INVALIDID) {
+        int num = sessions[key].room;
+        rooms[num].room_lock.lock();
+        auto begin = rooms[num].USERS.begin();
+        auto end = rooms[num].USERS.end();
+        rooms[num].USERS.erase(remove(begin,end, key), end);
+        rooms[num].room_lock.unlock();
+    }
     bool b = m_pDB->Logout(sessions[key].id);
     if (b)
         std::cout << "logout: " << key << std::endl;
@@ -253,7 +285,9 @@ void CSERVER::WorkerFunc()
         case OE_recv: {
             char* packet_ptr = over_ex->messageBuffer;
             int required_data = Transferred + sessions[key].prev_size;
-            int packet_size = packet_ptr[0];
+
+            Packet* p = reinterpret_cast<Packet*>(packet_ptr);
+            int packet_size = p->size;
             while (required_data >= packet_size) {
                 if (required_data >= BUFSIZE) break;
                 if (packet_size <= 0) break;
@@ -261,7 +295,8 @@ void CSERVER::WorkerFunc()
                 process_packet(key, packet_ptr);
                 required_data -= packet_size;
                 packet_ptr += packet_size;
-                packet_size = packet_ptr[0];
+                //packet_size = packet_ptr[0];
+                packet_size = p->size;
             }
             packet_size = 0;
             sessions[key].prev_size = 0;
@@ -342,4 +377,22 @@ int CSERVER::SetKey()
             return cnt;
         ++cnt;
     }
+}
+
+int CSERVER::SetRoomKey()
+{
+    int cnt = 1;
+    while (true) {
+        if (cnt == MAX_ROOM)
+            return -1;
+        if (rooms[cnt].working == false)
+            return cnt;
+        ++cnt;
+    }
+}
+
+void ROOM::init()
+{
+    USERS.clear();
+    working = false;
 }

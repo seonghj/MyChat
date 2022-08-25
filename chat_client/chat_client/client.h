@@ -24,8 +24,8 @@ public:
 
 	// 1 = success 2 = fail
 	int LoginState = 0;
+	int JoinRoom = 0;
 	char serverIP[50];
-
 
 	void display_error(const char* msg, int err_no);
 	void err_quit(const char* msg);
@@ -35,7 +35,8 @@ public:
 	void SendDisconnectPacket();
 	void SendChatPacket(char* buf);
 	void SendLoginPacket(char* id, char* pw);
-	void SendJoinPacket(char* id, char* pw);
+	void SendJoinAccountPacket(char* id, char* pw);
+	void SendJoinRoomPacket(int room);
 	void connect_server(CGUI* pGUI);
 	void SetpGUI(CGUI* pGUI) { m_pGUI = pGUI; };
 

@@ -3,13 +3,10 @@
 #include "protocol.h"
 #include "DB.h"
 
-class SESSION
-{
+class SESSION{
 public:
 
     SESSION() {}
-    SESSION(const SESSION& session) {}
-    SESSION(BOOL b) : connected(b) {}
     ~SESSION() {}
 
     OVER_EX                  over;
@@ -21,8 +18,9 @@ public:
     char*                    packet_start;
     char*                    recv_start;
 
-    std::atomic<bool>        connected = false;
-    std::atomic<int>         key = INVALIDID;
+    bool                     connected = false;
+    int                      key       = INVALIDID;
+    int                      room      = INVALIDID;
 
     char                     id[20];
     char                     pw[20];
@@ -33,26 +31,38 @@ private:
     std::mutex               s_lock;
 };
 
+class ROOM {
+public:
+    std::vector<int> USERS;
 
-class CSERVER 
-{
+    bool             working = false;
+    std::mutex       room_lock;
+
+    void init();
+};
+
+
+class CSERVER {
 public: 
     void display_error(const char* msg, int err_no);
     void do_recv(int key);
     void send_packet(int to, char* packet);
-    void send_chat_to_all(int key, char* buf);
-    void send_loginOK_packet(int key);
-    void send_userlogin_packet(int key);
-    void send_loginFail_packet(int key);
-    void send_chat_packet(int key, char* buf);
+    void SendChat(int key, int room, char* buf);
+    void SendLoginOK(int key);
+    void SendUserLogin(int key);
+    void SendLoginFail(int key);
+    void SendChat(int key, char* buf);
+    void SendJoinRoom(int key, int room);
     void process_packet(int key, char* buf);
     void Disconnect(int key);
     void WorkerFunc();
     bool Init();
     void Thread_join();
     int SetKey();
+    int SetRoomKey();
 
     SESSION sessions[MAX_CLIENT];
+    ROOM    rooms[MAX_ROOM];
 
     DB* m_pDB;
 

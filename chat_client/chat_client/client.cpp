@@ -27,8 +27,8 @@ void CCLIENT::err_quit(const char* msg)
 
 void CCLIENT::ProcessPacket(char* buf)
 {
-    switch (buf[1])
-    {
+    Packet* p = reinterpret_cast<Packet*>(buf);
+    switch (p->type){
     case PACKETTYPE::SC_CONNECT: {
         SC_CONNECT_PACKET* p = reinterpret_cast<SC_CONNECT_PACKET*>(buf);
         My_Key = p->key;
@@ -54,6 +54,11 @@ void CCLIENT::ProcessPacket(char* buf)
         SC_CHAT_PACKET* p = reinterpret_cast<SC_CHAT_PACKET*>(buf);
         m_pGUI->DisplayText("USER %d: ", p->key);
         m_pGUI->DisplayText("%s\r\n", p->buf);
+        break;
+    }
+    case PACKETTYPE::SC_JOINROOM: {
+        SC_JOINROOM_PACKET* p = reinterpret_cast<SC_JOINROOM_PACKET*>(buf);
+        JoinRoom = 1;
         break;
     }
     default:
@@ -157,14 +162,25 @@ void CCLIENT::SendLoginPacket(char* id, char* pw)
     SendPacket(reinterpret_cast<char*>(&p));
 }
 
-void CCLIENT::SendJoinPacket(char* id, char* pw)
+void CCLIENT::SendJoinAccountPacket(char* id, char* pw)
 {
-    CS_JOIN_PACKET p;
+    CS_JOINACCOUNT_PACKET p;
     p.size = sizeof(p);
-    p.type = PACKETTYPE::CS_JOIN;
+    p.type = PACKETTYPE::CS_JOINACCOUNT;
     p.key = My_Key;
     strcpy_s(p.id, id);
     strcpy_s(p.pw, pw);
+    SendPacket(reinterpret_cast<char*>(&p));
+}
+
+void CCLIENT::SendJoinRoomPacket(int room)
+{
+    CS_JOINROOM_PACKET p;
+    p.size = sizeof(p);
+    p.type = PACKETTYPE::CS_JOINROOM;
+    p.key = My_Key;
+    p.room = room;
+   
     SendPacket(reinterpret_cast<char*>(&p));
 }
 

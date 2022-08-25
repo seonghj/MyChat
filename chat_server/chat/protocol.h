@@ -4,6 +4,8 @@
 constexpr int SERVERPORT = 3500;
 constexpr int BUFSIZE = 128;
 constexpr int MAX_CLIENT = 1000;
+constexpr int MAX_USER_INROOM = 100;
+constexpr int MAX_ROOM = 100;
 constexpr int SERVERID = 0;
 constexpr int INVALIDID = 987654321;
 
@@ -30,16 +32,18 @@ enum PACKETTYPE {
 	SC_LOGINOK,
 	SC_LOGINFAIL,
 	SC_USERLOGIN,
+	SC_JOINROOM,
 	SC_CHAT,
 
 	CS_DISCONNECT,
 	CS_LOGIN,
 	CS_CHAT,
-	CS_JOIN
+	CS_JOINACCOUNT,
+	CS_JOINROOM
 };
 
 struct Packet {
-	char size;
+	unsigned int size;
 	char type;
 	unsigned int key;
 };
@@ -62,6 +66,11 @@ struct SC_CHAT_PACKET :public Packet {
 	int time;
 };
 
+struct SC_JOINROOM_PACKET :public Packet {
+	unsigned int room;
+};
+
+
 struct CS_DISCONNECT_PACKET :public Packet {
 };
 
@@ -70,10 +79,14 @@ struct CS_LOGIN_PACKET :public Packet {
 	char pw[20];
 };
 
-struct CS_JOIN_PACKET :public Packet {
+struct CS_JOINACCOUNT_PACKET :public Packet {
 	char id[20];
 	char pw[20];
 };
 struct CS_CHAT_PACKET :public Packet {
 	char buf[100];
+};
+
+struct CS_JOINROOM_PACKET :public Packet {
+	unsigned int room;
 };

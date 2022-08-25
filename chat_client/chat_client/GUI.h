@@ -14,11 +14,12 @@ public:
 	
 	HWND hEdit1, hEdit2;
 	HWND hDlg;
-	HWND hUserList;
+	HWND hList;
 
 	MSG msg;
 
 	int CurrDlgID;
+	int SelectRoom = INVALIDID;
 
 	char buf[BUFSIZE + 1];
 
@@ -36,6 +37,8 @@ public:
 	void OnCommandDlg1(HWND hWnd, WPARAM wParam);
 	void OnCommandDlg2(HWND hWnd, WPARAM wParam);
 	void OnCommandDlg3(HWND hWnd, WPARAM wParam);
+
+	void OnCommandDlg4(HWND hWnd, WPARAM wParam);
 
 	void EndDlg();
 

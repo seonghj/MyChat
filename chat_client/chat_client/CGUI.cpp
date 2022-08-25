@@ -45,7 +45,7 @@ void CGUI::OpenNewDialog(UINT Tdlg)
 
 void CGUI::AddUserList(char* user)
 {
-	SendMessage(hUserList, LB_ADDSTRING, 0, (LPARAM)user);
+	SendMessage(hList, LB_ADDSTRING, 0, (LPARAM)user);
 }
 
 // 대화상자 프로시저
@@ -58,12 +58,17 @@ INT_PTR CALLBACK CGUI::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		::SetWindowLongPtr(hWnd, GWLP_USERDATA, lParam);
 		self = (CGUI*)lParam;
 		self->hDlg = hWnd;
-		if (self->CurrDlgID == IDD_DIALOG1) {
-			char Items[][15] = { "Apple","Orange","Melon","Graph","Strawberry" };
+		if (self->CurrDlgID == IDD_DIALOG1){
 			self->hEdit1 = GetDlgItem(hWnd, IDC1_INPUT);
 			self->hEdit2 = GetDlgItem(hWnd, IDC1_OUTPUT);
 			SendMessage(self->hEdit1, EM_SETLIMITTEXT, BUFSIZE, 0);
-			self->hUserList = GetDlgItem(hWnd, IDC1_LIST);
+			self->hList = GetDlgItem(hWnd, IDC1_LIST);
+		}
+		else if (self->CurrDlgID == IDD_DIALOG4) {
+			char Items[][15] = { "room1","room2","room3","room4","room5" };
+			self->hList = GetDlgItem(hWnd, IDC4_LIST);
+			for (int i = 0; i < 5; ++i)
+				SendMessage(self->hList, LB_ADDSTRING, 0, (LPARAM)Items[i]);
 		}
 		return TRUE;
 	}
@@ -74,6 +79,8 @@ INT_PTR CALLBACK CGUI::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 			self->OnCommandDlg2(hWnd, wParam);
 		else if (self->CurrDlgID == IDD_DIALOG3)
 			self->OnCommandDlg3(hWnd, wParam);
+		else if (self->CurrDlgID == IDD_DIALOG4)
+			self->OnCommandDlg4(hWnd, wParam);
 		return FALSE;
 	}
 	}
@@ -133,7 +140,7 @@ void CGUI::OnCommandDlg3(HWND hWnd, WPARAM wParam)
 		while (1) {
 			if (m_pClient->LoginState == 1) {
 				EndDlg();
-				OpenNewDialog(IDD_DIALOG1);
+				OpenNewDialog(IDD_DIALOG4);
 				break;
 			}
 			else if (m_pClient->LoginState == 2) break;
@@ -144,10 +151,44 @@ void CGUI::OnCommandDlg3(HWND hWnd, WPARAM wParam)
 	case IDC3_JOIN: {
 		GetDlgItemTextA(hWnd, IDC3_ID, m_pClient->userID, 20);
 		GetDlgItemTextA(hWnd, IDC3_PW, m_pClient->userPW, 20);
-		m_pClient->SendJoinPacket(m_pClient->userID, m_pClient->userPW);
+		m_pClient->SendJoinAccountPacket(m_pClient->userID, m_pClient->userPW);
 		break;
 	}
 	case IDC3_END: {
+		m_pClient->SendDisconnectPacket();
+		EndDialog(hWnd, IDCANCEL); // 대화상자 닫기
+		if (m_pClient->LoginState != 0) m_pClient->RecvThread.join();
+		break;
+	}
+	}
+}
+
+void CGUI::OnCommandDlg4(HWND hWnd, WPARAM wParam)
+{
+	switch (LOWORD(wParam)) {
+	case IDC4_LIST: {
+		if (HIWORD(wParam) == LBN_SELCHANGE){
+			SelectRoom = SendMessage(hList, LB_GETCURSEL, 0, 0);
+			char text[15];
+			SendMessage(hList, LB_GETTEXT, SelectRoom, (LPARAM)text);
+		}
+		break;
+	}
+	case IDC4_JOIN: {
+		if (SelectRoom == INVALIDID) break;
+		m_pClient->SendJoinRoomPacket(SelectRoom);
+		while (1) {
+			if (m_pClient->JoinRoom == 1) {
+				EndDlg();
+				OpenNewDialog(IDD_DIALOG1);
+				break;
+			}
+			else if (m_pClient->JoinRoom == 2) break;
+			Sleep(2000);
+		}
+		break;
+	}
+	case IDC4_END: {
 		m_pClient->SendDisconnectPacket();
 		EndDialog(hWnd, IDCANCEL); // 대화상자 닫기
 		if (m_pClient->LoginState != 0) m_pClient->RecvThread.join();
