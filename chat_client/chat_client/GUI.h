@@ -1,9 +1,9 @@
 #pragma once
 #include "stdafx.h"
 #include "protocol.h"
-#include "client.h"
+#include "CNETWORK.h"
 
-class CCLIENT;
+class CNETWORK;
 
 class CGUI {
 public:
@@ -14,7 +14,7 @@ public:
 	
 	HWND hEdit1, hEdit2;
 	HWND hDlg;
-	HWND hList;
+	HWND hUserList, hRoomList;
 
 	MSG msg;
 
@@ -25,7 +25,7 @@ public:
 
 	void DisplayText(const char* fmt, ...);
 	void DisplayText(const wchar_t* fmt, ...);
-	int StartDialog(HINSTANCE hInstance, UINT uMsg, CCLIENT* pClient);
+	int StartDialog(HINSTANCE hInstance, UINT uMsg, CNETWORK* pClient);
 	void OpenNewDialog(UINT Tdlg);
 
 	void AddUserList(char* user);
@@ -43,7 +43,7 @@ public:
 	void EndDlg();
 
 private:
-	CCLIENT* m_pClient = NULL;
+	CNETWORK* m_pNetwork = NULL;
 	HINSTANCE* m_pHInstance;
 };
 

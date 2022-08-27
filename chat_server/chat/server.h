@@ -36,9 +36,9 @@ public:
     std::vector<int> USERS;
 
     bool             working = false;
-    std::mutex       room_lock;
-
     void init();
+
+    std::mutex       room_lock;
 };
 
 
@@ -46,13 +46,14 @@ class CSERVER {
 public: 
     void display_error(const char* msg, int err_no);
     void do_recv(int key);
-    void send_packet(int to, char* packet);
+    void send_packet(int to, char* packet, int size);
     void SendChat(int key, int room, char* buf);
     void SendLoginOK(int key);
     void SendUserLogin(int key);
     void SendLoginFail(int key);
     void SendChat(int key, char* buf);
     void SendJoinRoom(int key, int room);
+    void SendUserList(int key, int room);
     void process_packet(int key, char* buf);
     void Disconnect(int key);
     void WorkerFunc();

@@ -56,24 +56,25 @@ void CSERVER::do_recv(int key)
     }
 }
 
-void CSERVER::send_packet(int to, char* packet)
+void CSERVER::send_packet(int to, char* packet, int size)
 {
     SOCKET client_s = sessions[to].sock;
-
     OVER_EX* over = new OVER_EX;
     ZeroMemory(over, sizeof(OVER_EX));
     over->dataBuffer.buf = packet;
-    over->dataBuffer.len = packet[0];
+    over->dataBuffer.len = size;
 
-    memcpy(over->messageBuffer, packet, packet[0]);
+    memcpy(over->messageBuffer, packet, size);
     over->type = OE_send;
     ZeroMemory(&over->overlapped, sizeof(over->overlapped));
+
+    std::cout << "size: " << size << std::endl;
 
     if (WSASend(client_s, &over->dataBuffer, 1, NULL,
         0, &(over->overlapped), NULL)) {
         int err_no = WSAGetLastError();
         if (err_no != WSA_IO_PENDING) {
-            printf("to: %d packet: %d send error: %d\n", to, packet[1], err_no);
+            printf("to: %d send error: %d\n", to, err_no);
         }
     }
 }
@@ -84,14 +85,13 @@ void CSERVER::SendChat(int key, int room, char* buf)
     p.size = sizeof(SC_CHAT_PACKET);
     p.type = PACKETTYPE::SC_CHAT;
     p.key = key;
+    strcpy_s(p.id, sessions[key].id);
     strcpy_s(p.buf, buf);
-
-    char* s_buf = reinterpret_cast<char*>(&p);
 
     rooms[room].room_lock.lock();
     for (int i : rooms[room].USERS) {
         if (!sessions[i].connected) continue;
-        send_packet(i, s_buf);
+        send_packet(i, reinterpret_cast<char*>(&p), p.size);
     }
     rooms[room].room_lock.unlock();
 }
@@ -103,7 +103,7 @@ void CSERVER::SendLoginOK(int key)
     p.type = PACKETTYPE::SC_LOGINOK;
     p.key = key;
 
-    send_packet(key, reinterpret_cast<char*>(&p));
+    send_packet(key, reinterpret_cast<char*>(&p), p.size);
 }
 
 void CSERVER::SendUserLogin(int key)
@@ -116,10 +116,13 @@ void CSERVER::SendUserLogin(int key)
 
     char* s_buf = reinterpret_cast<char*>(&p);
 
-    for (int i = 0; i < MAX_CLIENT; ++i) {
+    int room_num = sessions[key].room;
+    rooms[room_num].room_lock.lock();
+    for (int i : rooms[room_num].USERS) {
         if (!sessions[i].connected) continue;
-        send_packet(i, s_buf);
+        send_packet(i, s_buf, p.size);
     }
+    rooms[room_num].room_lock.unlock();
 }
 
 void CSERVER::SendLoginFail(int key)
@@ -129,7 +132,7 @@ void CSERVER::SendLoginFail(int key)
     p.type = PACKETTYPE::SC_LOGINFAIL;
     p.key = key;
 
-    send_packet(key, reinterpret_cast<char*>(&p));
+    send_packet(key, reinterpret_cast<char*>(&p), p.size);
 }
 
 void CSERVER::SendChat(int key, char* buf)
@@ -140,7 +143,7 @@ void CSERVER::SendChat(int key, char* buf)
     p.key = key;
     memcpy(p.buf, buf, 100);
 
-    send_packet(key, reinterpret_cast<char*>(&p));
+    send_packet(key, reinterpret_cast<char*>(&p), p.size);
 }
 
 void CSERVER::SendJoinRoom(int key, int room)
@@ -151,7 +154,30 @@ void CSERVER::SendJoinRoom(int key, int room)
     p.key = key;
     p.room = room;
 
-    send_packet(key, reinterpret_cast<char*>(&p));
+    send_packet(key, reinterpret_cast<char*>(&p), p.size);
+}
+
+void CSERVER::SendUserList(int key, int room)
+{
+    SC_USERLIST_PACKET p;
+    p.size = sizeof(SC_USERLIST_PACKET);
+    p.type = PACKETTYPE::SC_USERLIST;
+    p.key = key;
+
+    int cnt = 0;
+    rooms[room].room_lock.lock();
+    for (int user : rooms[room].USERS) {
+        memcpy(p.id[cnt], sessions[user].id, sizeof(sessions[user].id));
+        cnt++;
+        if (cnt == 10) {
+            memcpy(p.id[10], "end", sizeof("end"));
+            send_packet(key, reinterpret_cast<char*>(&p), p.size);
+            cnt = 0;
+        }
+    }
+    rooms[room].room_lock.unlock();
+    memcpy(p.id[cnt], "end", sizeof("end"));
+    send_packet(key, reinterpret_cast<char*>(&p), p.size);
 }
 
 void CSERVER::process_packet(int key, char* buf)
@@ -166,7 +192,6 @@ void CSERVER::process_packet(int key, char* buf)
             SendLoginOK(key);
             strcpy_s(sessions[key].id, sizeof(p->id), p->id);
             strcpy_s(sessions[key].pw, sizeof(p->pw), p->pw);
-            SendUserLogin(key);
         }
         else {
             SendLoginFail(key);
@@ -175,6 +200,7 @@ void CSERVER::process_packet(int key, char* buf)
     }
     case CS_CHAT: {
         CS_CHAT_PACKET* p = reinterpret_cast<CS_CHAT_PACKET*>(buf);
+        std::cout << p->key << " " << sessions[p->key].room << std::endl;
         SendChat(p->key, sessions[p->key].room, p->buf);
         break;
     }
@@ -190,11 +216,18 @@ void CSERVER::process_packet(int key, char* buf)
         rooms[p->room].room_lock.unlock();
         sessions[p->key].room = p->room;
         SendJoinRoom(p->key, p->room);
+        SendUserLogin(p->key);
         break;
     }
     case CS_DISCONNECT: {
         CS_DISCONNECT_PACKET* p = reinterpret_cast<CS_DISCONNECT_PACKET*>(buf);
         Disconnect(p->key);
+        break;
+    }
+    case CS_GETUSERLIST: {
+        CS_GETUSERLIST_PACKET* p = reinterpret_cast<CS_GETUSERLIST_PACKET*>(buf);
+        if (sessions[p->key].room == INVALIDID) break;
+        SendUserList(p->key, sessions[p->key].room);
         break;
     }
     default:
@@ -279,7 +312,7 @@ void CSERVER::WorkerFunc()
             p.size = sizeof(p);
             p.type = PACKETTYPE::SC_CONNECT;
             p.key = client_key;
-            send_packet(client_key, reinterpret_cast<char*>(&p));
+            send_packet(client_key, reinterpret_cast<char*>(&p), p.size);
             break;
         }
         case OE_recv: {
@@ -318,6 +351,11 @@ bool CSERVER::Init()
 {
     for (auto& s : sessions) {
         s.init();
+    }
+
+    for (auto& r : rooms) {
+        r.init();
+        r.working = true;
     }
 
     WSADATA wsa;

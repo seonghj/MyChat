@@ -6,10 +6,10 @@
 
 class CGUI;
 
-class CCLIENT{
+class CNETWORK{
 public:
-	CCLIENT() {};
-	~CCLIENT() {};
+	CNETWORK() {};
+	~CNETWORK() {};
 
 	SOCKET sock;
 	char Sendbuf[BUFSIZE];
@@ -37,11 +37,13 @@ public:
 	void SendLoginPacket(char* id, char* pw);
 	void SendJoinAccountPacket(char* id, char* pw);
 	void SendJoinRoomPacket(int room);
+	void SendGetUserListPacket();
 	void connect_server(CGUI* pGUI);
 	void SetpGUI(CGUI* pGUI) { m_pGUI = pGUI; };
 
 	std::thread RecvThread;
 private:
 	int My_Key = INVALIDID;
+	int RoomNum = INVALIDID;
 	CGUI* m_pGUI = NULL;
 };

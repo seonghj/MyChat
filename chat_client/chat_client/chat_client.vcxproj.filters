@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="client.h">
+    <ClInclude Include="CNETWORK.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
@@ -35,7 +35,7 @@
     <ClCompile Include="main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="client.cpp">
+    <ClCompile Include="CNETWORK.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="CGUI.cpp">

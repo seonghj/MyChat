@@ -1,7 +1,7 @@
-﻿#include "client.h"
+﻿#include "CNETWORK.h"
 #pragma warning(disable : 4996)
 
-void CCLIENT::display_error(const char* msg, int err_no)
+void CNETWORK::display_error(const char* msg, int err_no)
 {
     WCHAR* lpMsgBuf;
     FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
@@ -12,7 +12,7 @@ void CCLIENT::display_error(const char* msg, int err_no)
     LocalFree(lpMsgBuf);
 }
 
-void CCLIENT::err_quit(const char* msg)
+void CNETWORK::err_quit(const char* msg)
 {
     LPVOID lpMsgBuf;
     FormatMessage(
@@ -25,7 +25,7 @@ void CCLIENT::err_quit(const char* msg)
     exit(1);
 }
 
-void CCLIENT::ProcessPacket(char* buf)
+void CNETWORK::ProcessPacket(char* buf)
 {
     Packet* p = reinterpret_cast<Packet*>(buf);
     switch (p->type){
@@ -52,7 +52,7 @@ void CCLIENT::ProcessPacket(char* buf)
     }
     case PACKETTYPE::SC_CHAT: {
         SC_CHAT_PACKET* p = reinterpret_cast<SC_CHAT_PACKET*>(buf);
-        m_pGUI->DisplayText("USER %d: ", p->key);
+        m_pGUI->DisplayText("%s: ", p->id);
         m_pGUI->DisplayText("%s\r\n", p->buf);
         break;
     }
@@ -61,12 +61,20 @@ void CCLIENT::ProcessPacket(char* buf)
         JoinRoom = 1;
         break;
     }
+    case PACKETTYPE::SC_USERLIST: {
+        SC_USERLIST_PACKET* p = reinterpret_cast<SC_USERLIST_PACKET*>(buf);
+        for (int i = 0; i < 10; i++) {
+            if (!strcmp(p->id[i], "end")) break;
+            m_pGUI->AddUserList(p->id[i]);
+        }
+        break;
+    }
     default:
         break;
     }
 }
 
-void CCLIENT::RecvThreadFunc() 
+void CNETWORK::RecvThreadFunc() 
 {
     DWORD flags = 0;
     int retval = 0;
@@ -120,10 +128,11 @@ void CCLIENT::RecvThreadFunc()
     }
 }
 
-void CCLIENT::SendPacket(char* buf)
+void CNETWORK::SendPacket(char* buf)
 {
+    Packet* p = reinterpret_cast<Packet*>(buf);
     int retval = 0;
-    wsabuf.len = buf[0];
+    wsabuf.len = p->size;
     wsabuf.buf = buf;
     retval = WSASend(sock, &wsabuf, 1, &sendbytes, 0, NULL, NULL);
     if (retval == SOCKET_ERROR) {
@@ -132,7 +141,7 @@ void CCLIENT::SendPacket(char* buf)
     }
 }
 
-void CCLIENT::SendDisconnectPacket()
+void CNETWORK::SendDisconnectPacket()
 {
     CS_DISCONNECT_PACKET p;
     p.size = sizeof(p);
@@ -141,17 +150,18 @@ void CCLIENT::SendDisconnectPacket()
     SendPacket(reinterpret_cast<char*>(&p));
 }
 
-void CCLIENT::SendChatPacket(char* buf)
+void CNETWORK::SendChatPacket(char* buf)
 {
     CS_CHAT_PACKET p;
     p.size = sizeof(p);
     p.type = PACKETTYPE::CS_CHAT;
     p.key = My_Key;
     strcpy_s(p.buf, buf);
+    std::cout << p.key << std::endl;
     SendPacket(reinterpret_cast<char*>(&p));
 }
 
-void CCLIENT::SendLoginPacket(char* id, char* pw)
+void CNETWORK::SendLoginPacket(char* id, char* pw)
 {
     CS_LOGIN_PACKET p;
     p.size = sizeof(p);
@@ -162,7 +172,7 @@ void CCLIENT::SendLoginPacket(char* id, char* pw)
     SendPacket(reinterpret_cast<char*>(&p));
 }
 
-void CCLIENT::SendJoinAccountPacket(char* id, char* pw)
+void CNETWORK::SendJoinAccountPacket(char* id, char* pw)
 {
     CS_JOINACCOUNT_PACKET p;
     p.size = sizeof(p);
@@ -173,7 +183,7 @@ void CCLIENT::SendJoinAccountPacket(char* id, char* pw)
     SendPacket(reinterpret_cast<char*>(&p));
 }
 
-void CCLIENT::SendJoinRoomPacket(int room)
+void CNETWORK::SendJoinRoomPacket(int room)
 {
     CS_JOINROOM_PACKET p;
     p.size = sizeof(p);
@@ -184,7 +194,18 @@ void CCLIENT::SendJoinRoomPacket(int room)
     SendPacket(reinterpret_cast<char*>(&p));
 }
 
-void CCLIENT::connect_server(CGUI* pGUI)
+void CNETWORK::SendGetUserListPacket()
+{
+    CS_GETUSERLIST_PACKET p;
+    p.size = sizeof(p);
+    p.type = PACKETTYPE::CS_GETUSERLIST;
+    p.key = My_Key;
+    p.room = RoomNum;
+
+    SendPacket(reinterpret_cast<char*>(&p));
+}
+
+void CNETWORK::connect_server(CGUI* pGUI)
 {
     m_pGUI = pGUI;
     int retval = 0;
@@ -204,5 +225,5 @@ void CCLIENT::connect_server(CGUI* pGUI)
     retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
     if (retval == SOCKET_ERROR) err_quit("connect()");
 
-    RecvThread = std::thread(&CCLIENT::RecvThreadFunc, this);
+    RecvThread = std::thread(&CNETWORK::RecvThreadFunc, this);
 }

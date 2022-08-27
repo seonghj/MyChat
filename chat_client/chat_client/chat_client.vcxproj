@@ -50,7 +50,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -139,7 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="client.h" />
+    <ClInclude Include="CNETWORK.h" />
     <ClInclude Include="GUI.h" />
     <ClInclude Include="protocol.h" />
     <ClInclude Include="resource.h" />
@@ -147,7 +147,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CGUI.cpp" />
-    <ClCompile Include="client.cpp" />
+    <ClCompile Include="CNETWORK.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -34,12 +34,14 @@ enum PACKETTYPE {
 	SC_USERLOGIN,
 	SC_JOINROOM,
 	SC_CHAT,
+	SC_USERLIST,
 
 	CS_DISCONNECT,
 	CS_LOGIN,
 	CS_CHAT,
 	CS_JOINACCOUNT,
-	CS_JOINROOM
+	CS_JOINROOM,
+	CS_GETUSERLIST
 };
 
 struct Packet {
@@ -62,6 +64,7 @@ struct SC_USERLOGIN_PACKET :public Packet {
 };
 
 struct SC_CHAT_PACKET :public Packet {
+	char id[20];
 	char buf[100];
 	int time;
 };
@@ -70,6 +73,9 @@ struct SC_JOINROOM_PACKET :public Packet {
 	unsigned int room;
 };
 
+struct SC_USERLIST_PACKET :public Packet {
+	char id[11][20];
+};
 
 struct CS_DISCONNECT_PACKET :public Packet {
 };
@@ -88,5 +94,9 @@ struct CS_CHAT_PACKET :public Packet {
 };
 
 struct CS_JOINROOM_PACKET :public Packet {
+	unsigned int room;
+};
+
+struct CS_GETUSERLIST_PACKET :public Packet {
 	unsigned int room;
 };

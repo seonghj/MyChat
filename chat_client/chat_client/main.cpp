@@ -1,5 +1,5 @@
 #include "GUI.h"
-#include "client.h"
+#include "CNETWORK.h"
 #include "resource.h"
 #include <windows.h>
 
@@ -9,7 +9,7 @@
 
 
 CGUI* g_GUI = new CGUI;
-CCLIENT* g_client = new CCLIENT;
+CNETWORK* g_client = new CNETWORK;
 
 HINSTANCE* g_hInstance;
 
