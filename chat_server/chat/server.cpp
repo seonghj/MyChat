@@ -68,8 +68,6 @@ void CSERVER::send_packet(int to, char* packet, int size)
     over->type = OE_send;
     ZeroMemory(&over->overlapped, sizeof(over->overlapped));
 
-    std::cout << "size: " << size << std::endl;
-
     if (WSASend(client_s, &over->dataBuffer, 1, NULL,
         0, &(over->overlapped), NULL)) {
         int err_no = WSAGetLastError();
@@ -82,24 +80,25 @@ void CSERVER::send_packet(int to, char* packet, int size)
 void CSERVER::SendChat(int key, int room, char* buf)
 {
     SC_CHAT_PACKET p;
-    p.size = sizeof(SC_CHAT_PACKET);
+    p.size = sizeof(p);
     p.type = PACKETTYPE::SC_CHAT;
     p.key = key;
     strcpy_s(p.id, sessions[key].id);
     strcpy_s(p.buf, buf);
 
     rooms[room].room_lock.lock();
-    for (int i : rooms[room].USERS) {
+    std::vector<int> u = rooms[room].USERS;
+    rooms[room].room_lock.unlock();
+    for (int i : u) {
         if (!sessions[i].connected) continue;
         send_packet(i, reinterpret_cast<char*>(&p), p.size);
     }
-    rooms[room].room_lock.unlock();
 }
 
 void CSERVER::SendLoginOK(int key)
 {
     SC_LOGINOK_PACKET p;
-    p.size = sizeof(SC_LOGINOK_PACKET);
+    p.size = sizeof(p);
     p.type = PACKETTYPE::SC_LOGINOK;
     p.key = key;
 
@@ -109,36 +108,52 @@ void CSERVER::SendLoginOK(int key)
 void CSERVER::SendUserLogin(int key)
 {
     SC_USERLOGIN_PACKET p;
-    p.size = sizeof(SC_USERLOGIN_PACKET);
+    p.size = sizeof(p);
     p.type = PACKETTYPE::SC_USERLOGIN;
     p.key = key;
     strcpy_s(p.id, sizeof(sessions[key].id), sessions[key].id);
 
-    char* s_buf = reinterpret_cast<char*>(&p);
-
     int room_num = sessions[key].room;
     rooms[room_num].room_lock.lock();
-    for (int i : rooms[room_num].USERS) {
-        if (!sessions[i].connected) continue;
-        send_packet(i, s_buf, p.size);
-    }
+    std::vector<int> u = rooms[room_num].USERS;
     rooms[room_num].room_lock.unlock();
+    for (int i : u) {
+        if (!sessions[i].connected) continue;
+        send_packet(i, reinterpret_cast<char*>(&p), p.size);
+    }
 }
 
 void CSERVER::SendLoginFail(int key)
 {
     SC_LOGINFAIL_PACKET p;
-    p.size = sizeof(SC_LOGINFAIL_PACKET);
+    p.size = sizeof(p);
     p.type = PACKETTYPE::SC_LOGINFAIL;
     p.key = key;
 
     send_packet(key, reinterpret_cast<char*>(&p), p.size);
 }
 
+void CSERVER::SendUserLogout(int key, int room)
+{
+    SC_USERLOGOUT_PACKET p;
+    p.size = sizeof(p);
+    p.type = PACKETTYPE::SC_USERLOGOUT;
+    p.key = key;
+
+    int room_num = room;
+    rooms[room_num].room_lock.lock();
+    std::vector<int> u = rooms[room_num].USERS;
+    rooms[room_num].room_lock.unlock();
+    for (int i : rooms[room_num].USERS) {
+        if (!sessions[i].connected) continue;
+        send_packet(i, reinterpret_cast<char*>(&p), p.size);
+    }
+}
+
 void CSERVER::SendChat(int key, char* buf)
 {
     SC_CHAT_PACKET p;
-    p.size = sizeof(SC_CHAT_PACKET);
+    p.size = sizeof(p);
     p.type = PACKETTYPE::SC_CHAT;
     p.key = key;
     memcpy(p.buf, buf, 100);
@@ -149,7 +164,7 @@ void CSERVER::SendChat(int key, char* buf)
 void CSERVER::SendJoinRoom(int key, int room)
 {
     SC_JOINROOM_PACKET p;
-    p.size = sizeof(SC_JOINROOM_PACKET);
+    p.size = sizeof(p);
     p.type = PACKETTYPE::SC_JOINROOM;
     p.key = key;
     p.room = room;
@@ -160,22 +175,24 @@ void CSERVER::SendJoinRoom(int key, int room)
 void CSERVER::SendUserList(int key, int room)
 {
     SC_USERLIST_PACKET p;
-    p.size = sizeof(SC_USERLIST_PACKET);
+    p.size = sizeof(p);
     p.type = PACKETTYPE::SC_USERLIST;
     p.key = key;
 
     int cnt = 0;
     rooms[room].room_lock.lock();
-    for (int user : rooms[room].USERS) {
+    std::vector<int> u = rooms[room].USERS;
+    rooms[room].room_lock.unlock();
+    for (int user : u) {
         memcpy(p.id[cnt], sessions[user].id, sizeof(sessions[user].id));
         cnt++;
         if (cnt == 10) {
             memcpy(p.id[10], "end", sizeof("end"));
-            send_packet(key, reinterpret_cast<char*>(&p), p.size);
+            if (sessions[user].connected)
+                send_packet(key, reinterpret_cast<char*>(&p), p.size);
             cnt = 0;
         }
     }
-    rooms[room].room_lock.unlock();
     memcpy(p.id[cnt], "end", sizeof("end"));
     send_packet(key, reinterpret_cast<char*>(&p), p.size);
 }
@@ -200,7 +217,6 @@ void CSERVER::process_packet(int key, char* buf)
     }
     case CS_CHAT: {
         CS_CHAT_PACKET* p = reinterpret_cast<CS_CHAT_PACKET*>(buf);
-        std::cout << p->key << " " << sessions[p->key].room << std::endl;
         SendChat(p->key, sessions[p->key].room, p->buf);
         break;
     }
@@ -211,10 +227,12 @@ void CSERVER::process_packet(int key, char* buf)
     }
     case CS_JOINROOM: {
         CS_JOINROOM_PACKET* p = reinterpret_cast<CS_JOINROOM_PACKET*>(buf);
-        rooms[p->room].room_lock.lock();
-        rooms[p->room].USERS.push_back(p->key);
-        rooms[p->room].room_lock.unlock();
+        std::cout << p->room << std::endl;
         sessions[p->key].room = p->room;
+        {
+            std::lock_guard<std::mutex> lg(rooms[p->room].room_lock);
+            rooms[p->room].USERS.push_back(p->key);
+        }
         SendJoinRoom(p->key, p->room);
         SendUserLogin(p->key);
         break;
@@ -237,15 +255,15 @@ void CSERVER::process_packet(int key, char* buf)
 
 void CSERVER::Disconnect(int key)
 {
+    int roomnum = sessions[key].room;
     closesocket(sessions[key].sock);
     if (sessions[key].room != INVALIDID) {
-        int num = sessions[key].room;
-        rooms[num].room_lock.lock();
-        auto begin = rooms[num].USERS.begin();
-        auto end = rooms[num].USERS.end();
-        rooms[num].USERS.erase(remove(begin,end, key), end);
-        rooms[num].room_lock.unlock();
+        std::lock_guard<std::mutex> lg(rooms[roomnum].room_lock);
+        auto begin = rooms[roomnum].USERS.begin();
+        auto end = rooms[roomnum].USERS.end();
+        rooms[roomnum].USERS.erase(remove(begin,end, key), end);
     }
+    SendUserLogout(key, roomnum);
     bool b = m_pDB->Logout(sessions[key].id);
     if (b)
         std::cout << "logout: " << key << std::endl;

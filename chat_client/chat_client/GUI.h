@@ -30,6 +30,8 @@ public:
 
 	void AddUserList(char* user);
 
+	void DeleteUserList(char* user);
+
 	static INT_PTR DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	HINSTANCE* GetHInstance() { return m_pHInstance; }

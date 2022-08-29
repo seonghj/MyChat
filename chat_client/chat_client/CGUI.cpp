@@ -48,6 +48,12 @@ void CGUI::AddUserList(char* user)
 	SendMessage(hUserList, LB_ADDSTRING, 0, (LPARAM)user);
 }
 
+void CGUI::DeleteUserList(char* user)
+{
+	int del = SendMessage(hUserList, LB_GETTEXT, 0, (LPARAM)user);
+	SendMessage(hUserList, LB_DELETESTRING, del, 0);
+}
+
 // 대화상자 프로시저
 INT_PTR CALLBACK CGUI::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {

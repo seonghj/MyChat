@@ -2,7 +2,7 @@
 #include <WinSock2.h>
 
 constexpr int SERVERPORT = 3500;
-constexpr int BUFSIZE = 128;
+constexpr int BUFSIZE = 512;
 constexpr int MAX_CLIENT = 1000;
 constexpr int MAX_USER_INROOM = 100;
 constexpr int MAX_ROOM = 100;
@@ -32,6 +32,7 @@ enum PACKETTYPE {
 	SC_LOGINOK,
 	SC_LOGINFAIL,
 	SC_USERLOGIN,
+	SC_USERLOGOUT,
 	SC_JOINROOM,
 	SC_CHAT,
 	SC_USERLIST,
@@ -62,10 +63,13 @@ struct SC_LOGINFAIL_PACKET :public Packet {
 struct SC_USERLOGIN_PACKET :public Packet {
 	char id[20];
 };
+struct SC_USERLOGOUT_PACKET :public Packet {
+	char id[20];
+};
 
 struct SC_CHAT_PACKET :public Packet {
 	char id[20];
-	char buf[100];
+	char buf[50];
 	int time;
 };
 

@@ -51,6 +51,7 @@ public:
     void SendLoginOK(int key);
     void SendUserLogin(int key);
     void SendLoginFail(int key);
+    void SendUserLogout(int key, int room);
     void SendChat(int key, char* buf);
     void SendJoinRoom(int key, int room);
     void SendUserList(int key, int room);

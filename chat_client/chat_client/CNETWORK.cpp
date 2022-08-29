@@ -69,6 +69,11 @@ void CNETWORK::ProcessPacket(char* buf)
         }
         break;
     }
+    case PACKETTYPE::SC_USERLOGOUT: {
+        SC_USERLOGOUT_PACKET* p = reinterpret_cast<SC_USERLOGOUT_PACKET*>(buf);
+        
+        break;
+    }
     default:
         break;
     }
@@ -157,7 +162,6 @@ void CNETWORK::SendChatPacket(char* buf)
     p.type = PACKETTYPE::CS_CHAT;
     p.key = My_Key;
     strcpy_s(p.buf, buf);
-    std::cout << p.key << std::endl;
     SendPacket(reinterpret_cast<char*>(&p));
 }
 

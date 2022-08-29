@@ -32,6 +32,7 @@ enum PACKETTYPE {
 	SC_LOGINOK,
 	SC_LOGINFAIL,
 	SC_USERLOGIN,
+	SC_USERLOGOUT,
 	SC_JOINROOM,
 	SC_CHAT,
 	SC_USERLIST,
@@ -60,6 +61,9 @@ struct SC_LOGINFAIL_PACKET :public Packet {
 };
 
 struct SC_USERLOGIN_PACKET :public Packet {
+	char id[20];
+};
+struct SC_USERLOGOUT_PACKET :public Packet {
 	char id[20];
 };
 

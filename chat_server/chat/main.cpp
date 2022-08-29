@@ -15,7 +15,7 @@ int main()
 	g_pServer->Init();
 
 	g_pServer->Thread_join();
-
+	std::cout << "½Ã¹ß\n" << std::endl;
 
 	delete g_pServer;
 	return 0;
