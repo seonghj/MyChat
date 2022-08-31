@@ -83,7 +83,7 @@ void DB::Disconnection_ODBC()
 
 bool DB::Search_ID(char* id, char* pw)
 {
-    wchar_t query[512] = L"SELECT PassWord FROM skyfall.userinfo WHERE ID = '";
+    wchar_t query[512] = L"SELECT PassWord FROM mychat.userinfo WHERE ID = '";
     wchar_t wcID[20];
     wchar_t wcPW[20];
 
@@ -112,7 +112,7 @@ bool DB::Search_ID(char* id, char* pw)
 
 bool DB::Insert_ID(char* id, char* pw)
 {
-    wchar_t query[512] = L"insert into skyfall.userinfo VALUES ('";
+    wchar_t query[512] = L"insert into mychat.userinfo VALUES ('";
     wchar_t wcID[20];
     wchar_t wcPW[20];
 
@@ -145,8 +145,8 @@ bool DB::Insert_ID(char* id, char* pw)
 
 bool DB::Login(char* id)
 {
-    wchar_t query1[512] = L"SELECT isLogin FROM skyfall.userinfo WHERE ID = '";
-    wchar_t query2[512] = L"UPDATE skyfall.userInfo SET isLogin = 1 WHERE ID = '";
+    wchar_t query1[512] = L"SELECT isLogin FROM mychat.userinfo WHERE ID = '";
+    wchar_t query2[512] = L"UPDATE mychat.userInfo SET isLogin = 1 WHERE ID = '";
     wchar_t wcID[20];
     SQLLEN len = 0;
     bool isLogin;
@@ -192,7 +192,7 @@ bool DB::Login(char* id)
 
 bool DB::Logout(char* id)
 {
-    wchar_t query[512] = L"UPDATE skyfall.userInfo SET isLogin = 0 WHERE ID = '";
+    wchar_t query[512] = L"UPDATE mychat.userInfo SET isLogin = 0 WHERE ID = '";
     wchar_t wcID[20];
 
     MultiByteToWideChar(CP_ACP, 0, id, -1, wcID, sizeof(id));

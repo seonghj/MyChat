@@ -86,9 +86,7 @@ void CSERVER::SendChat(int key, int room, char* buf)
     strcpy_s(p.id, sessions[key].id);
     strcpy_s(p.buf, buf);
 
-    rooms[room].room_lock.lock();
     std::vector<int> u = rooms[room].USERS;
-    rooms[room].room_lock.unlock();
     for (int i : u) {
         if (!sessions[i].connected) continue;
         send_packet(i, reinterpret_cast<char*>(&p), p.size);
@@ -111,7 +109,7 @@ void CSERVER::SendUserLogin(int key)
     p.size = sizeof(p);
     p.type = PACKETTYPE::SC_USERLOGIN;
     p.key = key;
-    strcpy_s(p.id, sizeof(sessions[key].id), sessions[key].id);
+    strcpy_s(p.id, sessions[key].id);
 
     int room_num = sessions[key].room;
     rooms[room_num].room_lock.lock();
@@ -139,6 +137,7 @@ void CSERVER::SendUserLogout(int key, int room)
     p.size = sizeof(p);
     p.type = PACKETTYPE::SC_USERLOGOUT;
     p.key = key;
+    strcpy_s(p.id, sessions[key].id);
 
     int room_num = room;
     rooms[room_num].room_lock.lock();
@@ -156,7 +155,7 @@ void CSERVER::SendChat(int key, char* buf)
     p.size = sizeof(p);
     p.type = PACKETTYPE::SC_CHAT;
     p.key = key;
-    memcpy(p.buf, buf, 100);
+    strcpy_s(p.buf, buf);
 
     send_packet(key, reinterpret_cast<char*>(&p), p.size);
 }
@@ -184,16 +183,16 @@ void CSERVER::SendUserList(int key, int room)
     std::vector<int> u = rooms[room].USERS;
     rooms[room].room_lock.unlock();
     for (int user : u) {
-        memcpy(p.id[cnt], sessions[user].id, sizeof(sessions[user].id));
+        strcpy_s(p.id[cnt], sessions[user].id);
         cnt++;
         if (cnt == 10) {
-            memcpy(p.id[10], "end", sizeof("end"));
+            strcpy_s(p.id[10], "end");
             if (sessions[user].connected)
                 send_packet(key, reinterpret_cast<char*>(&p), p.size);
             cnt = 0;
         }
     }
-    memcpy(p.id[cnt], "end", sizeof("end"));
+    strcpy_s(p.id[cnt], "end");
     send_packet(key, reinterpret_cast<char*>(&p), p.size);
 }
 
@@ -207,8 +206,8 @@ void CSERVER::process_packet(int key, char* buf)
         bool b = m_pDB->Login(p->id);
         if (b) {
             SendLoginOK(key);
-            strcpy_s(sessions[key].id, sizeof(p->id), p->id);
-            strcpy_s(sessions[key].pw, sizeof(p->pw), p->pw);
+            strcpy_s(sessions[key].id, p->id);
+            strcpy_s(sessions[key].pw, p->pw);
         }
         else {
             SendLoginFail(key);
@@ -227,7 +226,6 @@ void CSERVER::process_packet(int key, char* buf)
     }
     case CS_JOINROOM: {
         CS_JOINROOM_PACKET* p = reinterpret_cast<CS_JOINROOM_PACKET*>(buf);
-        std::cout << p->room << std::endl;
         sessions[p->key].room = p->room;
         {
             std::lock_guard<std::mutex> lg(rooms[p->room].room_lock);

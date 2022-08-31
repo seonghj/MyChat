@@ -50,8 +50,16 @@ void CGUI::AddUserList(char* user)
 
 void CGUI::DeleteUserList(char* user)
 {
-	int del = SendMessage(hUserList, LB_GETTEXT, 0, (LPARAM)user);
-	SendMessage(hUserList, LB_DELETESTRING, del, 0);
+	char name[20];
+	int cnt = SendMessage(hUserList, LB_GETCOUNT, 0, 0);
+	int del;
+	for (int i = 0; i <= cnt; i++) {
+		SendMessage(hUserList, LB_GETTEXT, i, (LPARAM)name);
+		if (strcmp(name, user) == 0) {
+			SendMessage(hUserList, LB_DELETESTRING, i, 0);
+			break;
+		}
+	}
 }
 
 // 대화상자 프로시저
@@ -77,6 +85,11 @@ INT_PTR CALLBACK CGUI::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 			for (int i = 0; i < 5; ++i)
 				SendMessage(self->hRoomList, LB_ADDSTRING, 0, (LPARAM)Items[i]);
 		}
+		return TRUE;
+	}
+	case WM_CTLCOLOREDIT:
+	{
+		
 		return TRUE;
 	}
 	case WM_COMMAND: {

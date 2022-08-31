@@ -69,7 +69,7 @@ struct SC_USERLOGOUT_PACKET :public Packet {
 
 struct SC_CHAT_PACKET :public Packet {
 	char id[20];
-	char buf[50];
+	char buf[100];
 	int time;
 };
 

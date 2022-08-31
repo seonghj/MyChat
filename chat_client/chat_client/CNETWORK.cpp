@@ -71,7 +71,7 @@ void CNETWORK::ProcessPacket(char* buf)
     }
     case PACKETTYPE::SC_USERLOGOUT: {
         SC_USERLOGOUT_PACKET* p = reinterpret_cast<SC_USERLOGOUT_PACKET*>(buf);
-        
+        m_pGUI->DeleteUserList(p->id);
         break;
     }
     default:

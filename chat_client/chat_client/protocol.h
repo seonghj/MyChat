@@ -2,7 +2,7 @@
 #include <WinSock2.h>
 
 constexpr int SERVERPORT = 3500;
-constexpr int BUFSIZE = 128;
+constexpr int BUFSIZE = 512;
 constexpr int MAX_CLIENT = 1000;
 constexpr int MAX_USER_INROOM = 100;
 constexpr int MAX_ROOM = 100;
