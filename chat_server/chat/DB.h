@@ -20,7 +20,6 @@ public:
 	char query[255];
 	bool isRun = false;
 
-	bool Connection();
 	bool Send_Query(char* query);
 
 	SQLHENV hEnv;
