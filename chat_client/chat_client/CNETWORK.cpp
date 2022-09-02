@@ -48,6 +48,7 @@ void CNETWORK::ProcessPacket(char* buf)
     case PACKETTYPE::SC_LOGINFAIL: {
         SC_LOGINFAIL_PACKET* p = reinterpret_cast<SC_LOGINFAIL_PACKET*>(buf);
         LoginState = 2;
+        MessageBox(m_pGUI->hMessageBox, "Login fail", "Login Fail", MB_OK);
         break;
     }
     case PACKETTYPE::SC_CHAT: {

@@ -36,4 +36,5 @@ public:
 	bool Insert_ID(char* id, char* pw);
 	bool Login(char* id);
 	bool Logout(char* id);
+	bool SaveLog(char* id, char* buf, int room);
 };

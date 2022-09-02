@@ -58,8 +58,8 @@ void DB::Disconnection_ODBC()
 bool DB::Search_ID(char* id, char* pw)
 {
     wchar_t query[512] = L"SELECT PassWord FROM mychat.userinfo WHERE ID = '";
-    wchar_t wcID[20];
-    wchar_t wcPW[20];
+    wchar_t wcID[40];
+    wchar_t wcPW[40];
 
     char PW[20];
     SQLLEN len = 0;
@@ -87,8 +87,8 @@ bool DB::Search_ID(char* id, char* pw)
 bool DB::Insert_ID(char* id, char* pw)
 {
     wchar_t query[512] = L"insert into mychat.userinfo VALUES ('";
-    wchar_t wcID[20];
-    wchar_t wcPW[20];
+    wchar_t wcID[40];
+    wchar_t wcPW[40];
 
     MultiByteToWideChar(CP_ACP, 0, id, -1, wcID, sizeof(id));
     MultiByteToWideChar(CP_ACP, 0, pw, -1, wcPW, sizeof(pw));
@@ -121,7 +121,7 @@ bool DB::Login(char* id)
 {
     wchar_t query1[512] = L"SELECT isLogin FROM mychat.userinfo WHERE ID = '";
     wchar_t query2[512] = L"UPDATE mychat.userInfo SET isLogin = 1 WHERE ID = '";
-    wchar_t wcID[20];
+    wchar_t wcID[40];
     SQLLEN len = 0;
     bool isLogin;
 
@@ -167,7 +167,7 @@ bool DB::Login(char* id)
 bool DB::Logout(char* id)
 {
     wchar_t query[512] = L"UPDATE mychat.userInfo SET isLogin = 0 WHERE ID = '";
-    wchar_t wcID[20];
+    wchar_t wcID[40];
 
     MultiByteToWideChar(CP_ACP, 0, id, -1, wcID, sizeof(id));
     wcscat_s(query, wcID);
@@ -184,6 +184,45 @@ bool DB::Logout(char* id)
     if (SQLExecDirect(hStmt, (SQLWCHAR*)query, SQL_NTS)
         != SQL_SUCCESS) {
         printf("Logout Query invaild\n");
+        return false;
+    }
+
+    if (hStmt) SQLCloseCursor(hStmt);
+
+    return true;
+}
+
+bool DB::SaveLog(char* id, char* buf, int room)
+{
+    wchar_t query[1024] = L"insert into mychat.chatlog VALUES ('";
+    wchar_t wcID[40];
+    wchar_t wcBuf[202];
+    wchar_t wcRoom[10];
+    std::string tmp = std::to_string(room);
+    const char* roomnum = tmp.c_str();
+
+    ZeroMemory(wcBuf, sizeof(wcBuf));
+    MultiByteToWideChar(CP_ACP, 0, id, -1, wcID, sizeof(id));
+    MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, buf, strlen(buf), wcBuf, strlen(buf));
+    MultiByteToWideChar(CP_ACP, 0, roomnum, -1, wcRoom, sizeof(roomnum));
+
+    wcscat_s(query, wcRoom);
+    wcscat_s(query, L"', '");
+    wcscat_s(query, wcID);
+    wcscat_s(query, L"', '");
+    wcscat_s(query, wcBuf);
+    wcscat_s(query, L"', CURRENT_TIMESTAMP())");
+#ifdef Test_DB 
+    wprintf(L"%s\n", query);
+#endif
+
+    if (SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt)
+        != SQL_SUCCESS)
+        return false;
+
+    if (SQLExecDirect(hStmt, (SQLWCHAR*)query, SQL_NTS)
+        != SQL_SUCCESS) {
+        printf("Query invaild\n");
         return false;
     }
 

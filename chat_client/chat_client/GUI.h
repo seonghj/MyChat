@@ -15,6 +15,7 @@ public:
 	HWND hEdit1, hEdit2;
 	HWND hDlg;
 	HWND hUserList, hRoomList;
+	HWND hMessageBox;
 
 	MSG msg;
 
@@ -41,6 +42,8 @@ public:
 	void OnCommandDlg3(HWND hWnd, WPARAM wParam);
 
 	void OnCommandDlg4(HWND hWnd, WPARAM wParam);
+
+	void OnCommandDlg5(HWND hWnd, WPARAM wParam);
 
 	void EndDlg();
 

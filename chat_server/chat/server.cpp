@@ -1,5 +1,9 @@
 ﻿#include "server.h"
 
+// DB 접속여부
+//#define DBRun 0;
+#define DBRun 1;
+
 void SESSION::init()
 {
     //memset(this, 0x00, sizeof(SESSION));
@@ -202,6 +206,7 @@ void CSERVER::process_packet(int key, char* buf)
     switch (p->type) {
     case CS_LOGIN: {
         CS_LOGIN_PACKET* p = reinterpret_cast<CS_LOGIN_PACKET*>(buf);
+#if DBRun
         m_pDB->Search_ID(p->id, p->pw);
         bool b = m_pDB->Login(p->id);
         if (b) {
@@ -212,16 +217,26 @@ void CSERVER::process_packet(int key, char* buf)
         else {
             SendLoginFail(key);
         }
+#else
+        SendLoginOK(key);
+        strcpy_s(sessions[key].id, p->id);
+        strcpy_s(sessions[key].pw, p->pw);
+#endif
         break;
     }
     case CS_CHAT: {
         CS_CHAT_PACKET* p = reinterpret_cast<CS_CHAT_PACKET*>(buf);
         SendChat(p->key, sessions[p->key].room, p->buf);
+#if DBRun
+        m_pDB->SaveLog(sessions[p->key].id, p->buf, sessions[p->key].room);
+#endif
         break;
     }
     case CS_JOINACCOUNT: {
         CS_JOINACCOUNT_PACKET* p = reinterpret_cast<CS_JOINACCOUNT_PACKET*>(buf);
+#if DBRun
         bool b = m_pDB->Insert_ID(p->id, p->pw);
+#endif
         break;
     }
     case CS_JOINROOM: {
@@ -261,10 +276,12 @@ void CSERVER::Disconnect(int key)
         auto end = rooms[roomnum].USERS.end();
         rooms[roomnum].USERS.erase(remove(begin,end, key), end);
     }
+#if DBRun
     SendUserLogout(key, roomnum);
     bool b = m_pDB->Logout(sessions[key].id);
     if (b)
         std::cout << "logout: " << key << std::endl;
+#endif
     sessions[key].init();
 }
 

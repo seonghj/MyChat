@@ -97,6 +97,15 @@ BEGIN
     PUSHBUTTON      "END",IDC4_END,231,153,71,16
 END
 
+IDD_DIALOG5 DIALOGEX 0, 0, 161, 77
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Login Fail"
+FONT 10, "Microsoft Sans Serif", 400, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK5,54,56,50,14
+    LTEXT           "Login fail",IDC5_STATIC,67,25,32,29
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -137,6 +146,14 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 169
     END
+
+    IDD_DIALOG5, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 154
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 70
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -162,6 +179,11 @@ BEGIN
 END
 
 IDD_DIALOG4 AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_DIALOG5 AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

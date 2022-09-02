@@ -101,6 +101,8 @@ INT_PTR CALLBACK CGUI::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 			self->OnCommandDlg3(hWnd, wParam);
 		else if (self->CurrDlgID == IDD_DIALOG4)
 			self->OnCommandDlg4(hWnd, wParam);
+		else if (self->CurrDlgID == IDD_DIALOG5)
+			self->OnCommandDlg5(hWnd, wParam);
 		return FALSE;
 	}
 	}
@@ -163,7 +165,9 @@ void CGUI::OnCommandDlg3(HWND hWnd, WPARAM wParam)
 				OpenNewDialog(IDD_DIALOG4);
 				break;
 			}
-			else if (m_pNetwork->LoginState == 2) break;
+			else if (m_pNetwork->LoginState == 2) {
+				break;
+			}
 			Sleep(2000);
 		}
 		break;
@@ -212,6 +216,16 @@ void CGUI::OnCommandDlg4(HWND hWnd, WPARAM wParam)
 		m_pNetwork->SendDisconnectPacket();
 		EndDialog(hWnd, IDCANCEL); // 대화상자 닫기
 		if (m_pNetwork->LoginState != 0) m_pNetwork->RecvThread.join();
+		break;
+	}
+	}
+}
+
+void CGUI::OnCommandDlg5(HWND hWnd, WPARAM wParam)
+{
+	switch (LOWORD(wParam)) {
+	case IDOK5: {
+		EndDialog(hWnd, IDCANCEL);
 		break;
 	}
 	}
