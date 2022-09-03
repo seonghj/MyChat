@@ -229,6 +229,6 @@ void CNETWORK::connect_server(CGUI* pGUI)
     serveraddr.sin_port = htons(SERVERPORT);
     retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
     if (retval == SOCKET_ERROR) err_quit("connect()");
-
+    ServerConnected = TRUE;
     RecvThread = std::thread(&CNETWORK::RecvThreadFunc, this);
 }

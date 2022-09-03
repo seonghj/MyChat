@@ -105,6 +105,13 @@ INT_PTR CALLBACK CGUI::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 			self->OnCommandDlg5(hWnd, wParam);
 		return FALSE;
 	}
+	case WM_CLOSE: {
+		if (self->m_pNetwork->ServerConnected) {
+			self->m_pNetwork->SendDisconnectPacket();
+			self->m_pNetwork->RecvThread.join();
+		}
+		EndDialog(hWnd, IDCANCEL);
+	}
 	}
 	return FALSE;
 }
@@ -123,9 +130,11 @@ void CGUI::OnCommandDlg1(HWND hWnd, WPARAM wParam)
 		break;
 	}
 	case ID1_END: {
-		m_pNetwork->SendDisconnectPacket();
-		EndDialog(hWnd, IDCANCEL); // 대화상자 닫기
-		if (m_pNetwork->LoginState == 1) m_pNetwork->RecvThread.join();
+		if (m_pNetwork->ServerConnected) {
+			m_pNetwork->SendDisconnectPacket();
+			m_pNetwork->RecvThread.join();
+		}
+		EndDialog(hWnd, IDCANCEL);
 		break;
 	}
 	}
@@ -179,9 +188,11 @@ void CGUI::OnCommandDlg3(HWND hWnd, WPARAM wParam)
 		break;
 	}
 	case IDC3_END: {
-		m_pNetwork->SendDisconnectPacket();
-		EndDialog(hWnd, IDCANCEL); // 대화상자 닫기
-		if (m_pNetwork->LoginState != 0) m_pNetwork->RecvThread.join();
+		if (m_pNetwork->ServerConnected) {
+			m_pNetwork->SendDisconnectPacket();
+			m_pNetwork->RecvThread.join();
+		}
+		EndDialog(hWnd, IDCANCEL);
 		break;
 	}
 	}
@@ -213,9 +224,11 @@ void CGUI::OnCommandDlg4(HWND hWnd, WPARAM wParam)
 		break;
 	}
 	case IDC4_END: {
-		m_pNetwork->SendDisconnectPacket();
-		EndDialog(hWnd, IDCANCEL); // 대화상자 닫기
-		if (m_pNetwork->LoginState != 0) m_pNetwork->RecvThread.join();
+		if (m_pNetwork->ServerConnected) {
+			m_pNetwork->SendDisconnectPacket();
+			m_pNetwork->RecvThread.join();
+		}
+		EndDialog(hWnd, IDCANCEL);
 		break;
 	}
 	}

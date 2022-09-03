@@ -23,6 +23,7 @@ public:
 	char userPW[20];
 
 	// 1 = success 2 = fail
+	bool ServerConnected = FALSE;
 	int LoginState = 0;
 	int JoinRoom = 0;
 	char serverIP[50];

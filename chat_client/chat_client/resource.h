@@ -26,9 +26,9 @@
 #define IDC4_LIST                       1020
 #define IDC4_JOIN                       1021
 #define IDC1_LIST                       1024
-#define IDC_EDIT1                       1025
 #define IDOK5                           1026
 #define IDC5_STATIC                     1027
+#define IDC_MFCEDITBROWSE1              1028
 
 // Next default values for new objects
 // 
@@ -36,7 +36,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        111
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1028
+#define _APS_NEXT_CONTROL_VALUE         1029
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
