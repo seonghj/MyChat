@@ -187,6 +187,7 @@ void CSERVER::SendUserList(int key, int room)
     std::vector<int> u = rooms[room].USERS;
     rooms[room].room_lock.unlock();
     for (int user : u) {
+        if (user == key) continue;
         strcpy_s(p.id[cnt], sessions[user].id);
         cnt++;
         if (cnt == 10) {

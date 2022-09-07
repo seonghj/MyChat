@@ -78,6 +78,11 @@ INT_PTR CALLBACK CGUI::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 			SendMessage(self->hEdit1, EM_SETLIMITTEXT, BUFSIZE, 0);
 			self->hUserList = GetDlgItem(hWnd, IDC1_LIST);
 			self->m_pNetwork->SendGetUserListPacket();
+
+			char tmp[30];
+			strcpy_s(tmp, self->m_pNetwork->userID);
+			strcat_s(tmp, " (Me)");
+			self->AddUserList(tmp);
 		}
 		else if (self->CurrDlgID == IDD_DIALOG4) {
 			char Items[][15] = { "room1","room2","room3","room4","room5" };
@@ -108,8 +113,8 @@ INT_PTR CALLBACK CGUI::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	case WM_CLOSE: {
 		if (self->m_pNetwork->ServerConnected) {
 			self->m_pNetwork->SendDisconnectPacket();
-			self->m_pNetwork->RecvThread.join();
 		}
+		self->m_pNetwork->isRun = FALSE;
 		EndDialog(hWnd, IDCANCEL);
 	}
 	}
@@ -132,9 +137,9 @@ void CGUI::OnCommandDlg1(HWND hWnd, WPARAM wParam)
 	case ID1_END: {
 		if (m_pNetwork->ServerConnected) {
 			m_pNetwork->SendDisconnectPacket();
-			m_pNetwork->RecvThread.join();
 		}
 		EndDialog(hWnd, IDCANCEL);
+		m_pNetwork->isRun = FALSE;
 		break;
 	}
 	}
@@ -190,9 +195,9 @@ void CGUI::OnCommandDlg3(HWND hWnd, WPARAM wParam)
 	case IDC3_END: {
 		if (m_pNetwork->ServerConnected) {
 			m_pNetwork->SendDisconnectPacket();
-			m_pNetwork->RecvThread.join();
 		}
 		EndDialog(hWnd, IDCANCEL);
+		m_pNetwork->isRun = FALSE;
 		break;
 	}
 	}
@@ -226,9 +231,9 @@ void CGUI::OnCommandDlg4(HWND hWnd, WPARAM wParam)
 	case IDC4_END: {
 		if (m_pNetwork->ServerConnected) {
 			m_pNetwork->SendDisconnectPacket();
-			m_pNetwork->RecvThread.join();
 		}
 		EndDialog(hWnd, IDCANCEL);
+		m_pNetwork->isRun = FALSE;
 		break;
 	}
 	}

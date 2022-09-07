@@ -9,7 +9,7 @@
 
 
 CGUI* g_GUI = new CGUI;
-CNETWORK* g_client = new CNETWORK;
+CNETWORK* g_cnetwork = new CNETWORK;
 
 HINSTANCE* g_hInstance;
 
@@ -17,6 +17,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	LPSTR lpCmdLine, int nCmdShow)
 {
 	g_hInstance = &hInstance;
-	g_GUI->StartDialog(hInstance, IDD_DIALOG2, g_client);
+	g_GUI->StartDialog(hInstance, IDD_DIALOG2, g_cnetwork);
+
+	g_cnetwork->RecvThread.join();
 	return 0;
 }

@@ -86,8 +86,6 @@ void CNETWORK::RecvThreadFunc()
     int retval = 0;
     int saved_packet_size = 0;
 
-    bool isRun = true;
-
     char recvbuf[BUFSIZE];
     char buffer[BUFSIZE];
 
