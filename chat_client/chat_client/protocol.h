@@ -10,7 +10,6 @@ constexpr int SERVERID = 0;
 constexpr int INVALIDID = 987654321;
 
 #define SERVERIP   "127.0.0.1"
-//#define SERVERIP   "39.120.192.92"
 
 enum OVER_EX_Type {
 	OE_accept,

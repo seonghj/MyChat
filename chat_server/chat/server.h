@@ -3,6 +3,8 @@
 #include "protocol.h"
 #include "DB.h"
 
+class DB;
+
 class SESSION{
 public:
 
@@ -24,6 +26,7 @@ public:
 
     char                     id[20];
     char                     pw[20];
+    long long                uid;
 
     void init();
 

@@ -3,12 +3,15 @@
 #include "sql.h"
 #include "sqlext.h"
 #include <mysql.h>
+#include "server.h"
 #pragma comment(lib, "libmySQL.lib")
 
 #define DB_HOST "127.0.0.1"
 #define DB_USER "root"
 #define DB_PW "tjdwo@1034"
 #define DB_NAME "GS_termproject"
+
+class CSERVER;
 
 class DB
 {
@@ -26,15 +29,13 @@ public:
 	SQLHDBC hDbc;
 	SQLHSTMT hStmt = 0;
 
-	SQLCHAR* name = (SQLCHAR*)"GS_termproject";
-	SQLCHAR* user = (SQLCHAR*)"root";
-	SQLCHAR* pw = (SQLCHAR*)"tjdwo@1034";
-
 	bool Connection_ODBC();
 	void Disconnection_ODBC();
-	bool Search_ID(char* id, char* pw);
-	bool Insert_ID(char* id, char* pw);
-	bool Login(char* id);
-	bool Logout(char* id);
+	bool Check_Login(char* id, char* pw, long long uid);
+	bool Add_User(char* id, char* pw, int uid);
 	bool SaveLog(char* id, char* buf, int room);
+
+	void Set_pServer(CSERVER* s) { m_pServer = s; }
+
+	CSERVER* m_pServer = NULL;
 };

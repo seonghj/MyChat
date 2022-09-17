@@ -10,6 +10,7 @@ int main()
 	std::wcout.imbue(std::locale("korean"));
 
 	g_pServer->m_pDB = g_pDB;
+	g_pDB->Set_pServer(g_pServer);
 	g_pDB->Connection_ODBC();
 
 	g_pServer->Init();

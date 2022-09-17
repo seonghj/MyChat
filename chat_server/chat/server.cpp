@@ -23,6 +23,7 @@ void SESSION::init()
 
     memset(id, 0, sizeof(id));
     memset(pw, 0, sizeof(pw));
+    uid = 0;
 }
 
 void CSERVER::display_error(const char* msg, int err_no)
@@ -145,12 +146,11 @@ void CSERVER::SendUserLogout(int key, int room)
 
     int room_num = room;
     rooms[room_num].room_lock.lock();
-    std::vector<int> u = rooms[room_num].USERS;
-    rooms[room_num].room_lock.unlock();
     for (int i : rooms[room_num].USERS) {
         if (!sessions[i].connected) continue;
         send_packet(i, reinterpret_cast<char*>(&p), p.size);
     }
+    rooms[room_num].room_lock.unlock();
 }
 
 void CSERVER::SendChat(int key, char* buf)
@@ -207,13 +207,15 @@ void CSERVER::process_packet(int key, char* buf)
     switch (p->type) {
     case CS_LOGIN: {
         CS_LOGIN_PACKET* p = reinterpret_cast<CS_LOGIN_PACKET*>(buf);
+        long long uid = 0;
 #if DBRun
-        m_pDB->Search_ID(p->id, p->pw);
-        bool b = m_pDB->Login(p->id);
-        if (b) {
+        int login_success = m_pDB->Check_Login(p->id, p->pw, uid);
+
+        if (login_success) {
             SendLoginOK(key);
             strcpy_s(sessions[key].id, p->id);
             strcpy_s(sessions[key].pw, p->pw);
+            sessions[key].uid = uid;
         }
         else {
             SendLoginFail(key);
@@ -235,8 +237,9 @@ void CSERVER::process_packet(int key, char* buf)
     }
     case CS_JOINACCOUNT: {
         CS_JOINACCOUNT_PACKET* p = reinterpret_cast<CS_JOINACCOUNT_PACKET*>(buf);
+        int uid = 0;
 #if DBRun
-        bool b = m_pDB->Insert_ID(p->id, p->pw);
+        bool b = m_pDB->Add_User(p->id, p->pw, uid);
 #endif
         break;
     }
@@ -272,18 +275,15 @@ void CSERVER::Disconnect(int key)
     int roomnum = sessions[key].room;
     closesocket(sessions[key].sock);
     if (sessions[key].room != INVALIDID) {
-        std::lock_guard<std::mutex> lg(rooms[roomnum].room_lock);
+        rooms[roomnum].room_lock.lock();
         auto begin = rooms[roomnum].USERS.begin();
         auto end = rooms[roomnum].USERS.end();
         rooms[roomnum].USERS.erase(remove(begin,end, key), end);
+        rooms[roomnum].room_lock.unlock();
+        SendUserLogout(key, roomnum);
     }
-#if DBRun
-    SendUserLogout(key, roomnum);
-    bool b = m_pDB->Logout(sessions[key].id);
-    if (b)
-        std::cout << "logout: " << key << std::endl;
-#endif
     sessions[key].init();
+    std::cout << "logout: " << key << std::endl;
 }
 
 void CSERVER::WorkerFunc()

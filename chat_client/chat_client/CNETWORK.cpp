@@ -43,6 +43,7 @@ void CNETWORK::ProcessPacket(char* buf)
     case PACKETTYPE::SC_USERLOGIN: {
         SC_USERLOGIN_PACKET* p = reinterpret_cast<SC_USERLOGIN_PACKET*>(buf);
         m_pGUI->AddUserList(p->id);
+        m_pGUI->DisplayText("(( %s Join the chat room ))\r\n", p->id);
         break;
     }
     case PACKETTYPE::SC_LOGINFAIL: {
@@ -73,6 +74,7 @@ void CNETWORK::ProcessPacket(char* buf)
     case PACKETTYPE::SC_USERLOGOUT: {
         SC_USERLOGOUT_PACKET* p = reinterpret_cast<SC_USERLOGOUT_PACKET*>(buf);
         m_pGUI->DeleteUserList(p->id);
+        m_pGUI->DisplayText("(( %s Left the chat room ))\r\n", p->id);
         break;
     }
     default:

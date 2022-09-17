@@ -51,6 +51,3 @@ private:
 	CNETWORK* m_pNetwork = NULL;
 	HINSTANCE* m_pHInstance;
 };
-
-//char test[10][10] = { "号1", "号2", "号3" , "号4" , "号5"
-//, "号6", "号7", "号8", "号9", "号10" };

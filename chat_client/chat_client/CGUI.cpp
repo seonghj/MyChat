@@ -1,7 +1,6 @@
 #include "GUI.h"
 #include "resource.h"
 
-// 에디트 컨트롤 출력 함수
 void CGUI::DisplayText(const char* fmt, ...)
 {
 	va_list arg;
