@@ -6,7 +6,6 @@
 
 void SESSION::init()
 {
-    //memset(this, 0x00, sizeof(SESSION));
     ZeroMemory(&over.overlapped, sizeof(over.overlapped));
 
     addrlen = 0;
@@ -16,6 +15,30 @@ void SESSION::init()
 
     connected = false;
     key = INVALIDID;
+    room = INVALIDID;
+
+    over.dataBuffer.len = BUFSIZE;
+    over.dataBuffer.buf = over.messageBuffer;
+
+    memset(id, 0, sizeof(id));
+    memset(pw, 0, sizeof(pw));
+    uid = 0;
+}
+
+void SESSION::init(OVER_EX* over_ex, OVER_EX_Type type, bool isConnect, int nkey)
+{
+    ZeroMemory(&over.overlapped, sizeof(over.overlapped));
+
+    sock = over_ex->csocket;
+    over.type = type;
+
+    addrlen = 0;
+    memset(packet_buf, 0, sizeof(packet_buf));
+    packet_start = nullptr;
+    recv_start = nullptr;
+
+    connected = isConnect;
+    key = nkey;
     room = INVALIDID;
 
     over.dataBuffer.len = BUFSIZE;
@@ -96,6 +119,15 @@ void CSERVER::SendChat(int key, int room, char* buf)
         if (!sessions[i].connected) continue;
         send_packet(i, reinterpret_cast<char*>(&p), p.size);
     }
+}
+
+void CSERVER::SendConnectOK(int key)
+{
+    SC_CONNECT_PACKET p;
+    p.size = sizeof(p);
+    p.type = PACKETTYPE::SC_CONNECT;
+    p.key = key;
+    send_packet(key, reinterpret_cast<char*>(&p), p.size);
 }
 
 void CSERVER::SendLoginOK(int key)
@@ -310,14 +342,8 @@ void CSERVER::WorkerFunc()
         case OE_accept: {
             int client_key = SetKey();
             if (client_key != -1) {
-                sessions[client_key].sock = over_ex->csocket;
-                sessions[client_key].over.type = OE_recv;
-                sessions[client_key].prev_size = 0;
-                sessions[client_key].init();
-                sessions[client_key].connected = TRUE;
-                sessions[client_key].key = client_key;
+                sessions[client_key].init(over_ex, OE_recv, TRUE, client_key);
                 CreateIoCompletionPort((HANDLE)sessions[client_key].sock, hcp, client_key, 0);
-                
                 do_recv(client_key);
             }
             else {
@@ -339,8 +365,6 @@ void CSERVER::WorkerFunc()
                     printf("%d\n", err_num);
                 }
             }
-            /*getpeername(sessions[client_key].sock, (SOCKADDR*)&sessions[client_key].clientaddr
-                , &sessions[client_key].addrlen);*/
             std::cout << "login: " << client_key << std::endl;
             SC_CONNECT_PACKET p;
             p.size = sizeof(p);

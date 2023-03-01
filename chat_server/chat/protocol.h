@@ -10,9 +10,9 @@ constexpr int SERVERID = 0;
 constexpr int INVALIDID = 987654321;
 
 #define SERVERIP   "127.0.0.1"
-//#define SERVERIP   "39.120.192.92"
 
 enum OVER_EX_Type {
+	OE_NULL,
 	OE_accept,
 	OE_send,
 	OE_recv,
@@ -33,6 +33,7 @@ enum PACKETTYPE {
 	SC_LOGINFAIL,
 	SC_USERLOGIN,
 	SC_USERLOGOUT,
+	SC_CREATEROOM,
 	SC_JOINROOM,
 	SC_CHAT,
 	SC_USERLIST,
@@ -41,6 +42,7 @@ enum PACKETTYPE {
 	CS_LOGIN,
 	CS_CHAT,
 	CS_JOINACCOUNT,
+	CS_CREATEROOM,
 	CS_JOINROOM,
 	CS_GETUSERLIST
 };
@@ -73,6 +75,10 @@ struct SC_CHAT_PACKET :public Packet {
 	int time;
 };
 
+struct SC_CREATEROOM_PACKET :public Packet {
+	unsigned int room;
+};
+
 struct SC_JOINROOM_PACKET :public Packet {
 	unsigned int room;
 };
@@ -95,6 +101,10 @@ struct CS_JOINACCOUNT_PACKET :public Packet {
 };
 struct CS_CHAT_PACKET :public Packet {
 	char buf[100];
+};
+
+struct CS_CREATEROOM_PACKET :public Packet {
+	unsigned int room;
 };
 
 struct CS_JOINROOM_PACKET :public Packet {

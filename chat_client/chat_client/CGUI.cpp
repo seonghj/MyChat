@@ -227,6 +227,9 @@ void CGUI::OnCommandDlg4(HWND hWnd, WPARAM wParam)
 		}
 		break;
 	}
+	case IDC4_MAKE: {
+		break;
+	}
 	case IDC4_END: {
 		if (m_pNetwork->ServerConnected) {
 			m_pNetwork->SendDisconnectPacket();

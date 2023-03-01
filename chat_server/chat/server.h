@@ -29,6 +29,7 @@ public:
     long long                uid;
 
     void init();
+    void init(OVER_EX* over_ex, OVER_EX_Type type, bool isConnect, int nkey);
 
 private:
     std::mutex               s_lock;
@@ -51,6 +52,7 @@ public:
     void do_recv(int key);
     void send_packet(int to, char* packet, int size);
     void SendChat(int key, int room, char* buf);
+    void SendConnectOK(int key);
     void SendLoginOK(int key);
     void SendUserLogin(int key);
     void SendLoginFail(int key);

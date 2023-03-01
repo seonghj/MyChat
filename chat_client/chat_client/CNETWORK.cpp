@@ -199,6 +199,17 @@ void CNETWORK::SendJoinRoomPacket(int room)
     SendPacket(reinterpret_cast<char*>(&p));
 }
 
+void CNETWORK::SendCreateRoomPacket()
+{
+    CS_CREATEROOM_PACKET p;
+    p.size = sizeof(p);
+    p.type = PACKETTYPE::CS_CREATEROOM;
+    p.key = My_Key;
+    p.room = -1;
+
+    SendPacket(reinterpret_cast<char*>(&p));
+}
+
 void CNETWORK::SendGetUserListPacket()
 {
     CS_GETUSERLIST_PACKET p;

@@ -25,10 +25,11 @@
 #define IDC3_END                        1019
 #define IDC4_LIST                       1020
 #define IDC4_JOIN                       1021
+#define IDC4_JOIN2                      1022
+#define IDC4_MAKE                       1022
 #define IDC1_LIST                       1024
 #define IDOK5                           1026
 #define IDC5_STATIC                     1027
-#define IDC_MFCEDITBROWSE1              1028
 
 // Next default values for new objects
 // 

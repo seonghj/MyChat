@@ -39,6 +39,7 @@ public:
 	void SendLoginPacket(char* id, char* pw);
 	void SendJoinAccountPacket(char* id, char* pw);
 	void SendJoinRoomPacket(int room);
+	void SendCreateRoomPacket();
 	void SendGetUserListPacket();
 	void connect_server(CGUI* pGUI);
 	void SetpGUI(CGUI* pGUI) { m_pGUI = pGUI; };
